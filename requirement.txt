@@ -1,0 +1,21 @@
+
+# Core
+numpy
+pandas
+matplotlib
+seaborn
+Pillow
+tqdm
+
+# Computer Vision (Inference only)
+opencv-python
+
+# API + UI
+fastapi
+uvicorn[standard]
+streamlit
+python-multipart
+
+# Utils
+pyyaml
+python-dotenv
