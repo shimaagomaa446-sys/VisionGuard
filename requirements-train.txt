@@ -1,0 +1,13 @@
+# ============================================
+# VisionGuard - Training Environment (Kaggle)
+# ============================================
+# ??????? ?? ??? Kaggle ???
+# ============================================
+
+# ?? ???? ?? ??? local
+-r requirements.txt
+
+# Training
+torch
+torchvision
+ultralytics
