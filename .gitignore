@@ -216,3 +216,36 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ============================================
+# VisionGuard Specific
+# ============================================
+
+# Model files (large - stored on Kaggle)
+models/*.pt
+models/*.pth
+models/*.onnx
+models/model.py
+
+# Test data (for local testing only)
+test_images/
+test_videos/
+
+# Temporary files
+live_stats.json
+webrtc_test.py
+test.py
+test_compliance.py
+
+# Notebooks (stored on Kaggle)
+Notebook/
+
+# Data folders (too large)
+data/raw/
+data/processed/
+data/splits/
+
+
+
+# Cache
+.cache/
