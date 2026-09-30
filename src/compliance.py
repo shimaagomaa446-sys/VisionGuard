@@ -1,5 +1,8 @@
 def is_inside(ppe_box, person_box):
-    """تحديد إذا كان مركز الـ PPE داخل الـ Person box"""
+    """
+    Check if the center of a PPE box is inside a person box.
+    Uses Point-in-Box instead of IoU (better for small PPE objects).
+    """
     cx = (ppe_box[0] + ppe_box[2]) / 2
     cy = (ppe_box[1] + ppe_box[3]) / 2
     x1, y1, x2, y2 = person_box
@@ -7,19 +10,11 @@ def is_inside(ppe_box, person_box):
 
 
 def check_compliance(results, model):
-    """
-    تحليل نتائج YOLO وتحديد حالة كل شخص.
-    
-    Args:
-        results: نتائج YOLO
-        model: الموديل (للأسماء)
-    
-    Returns:
-        list: قايمة بالشخاص وحالتهم
-    """
     persons = []
     hardhats = []
+    no_hardhats = []
     safety_vests = []
+    no_safety_vests = []
     
     for box in results[0].boxes:
         cls_id = int(box.cls[0])
@@ -27,7 +22,6 @@ def check_compliance(results, model):
         conf = float(box.conf[0])
         class_name = model.names[cls_id]
         
-        # الحصول على track_id
         track_id = None
         if box.id is not None:
             track_id = int(box.id[0])
@@ -38,32 +32,32 @@ def check_compliance(results, model):
             persons.append(item)
         elif class_name == 'Hardhat':
             hardhats.append(item)
+        elif class_name == 'NO-Hardhat':
+            no_hardhats.append(item)
         elif class_name == 'Safety Vest':
             safety_vests.append(item)
+        elif class_name == 'NO-Safety Vest':
+            no_safety_vests.append(item)
     
     results_list = []
     for i, person in enumerate(persons):
         person_box = person['box']
         
-        # البحث عن Hardhat
-        has_hardhat = False
-        for h in hardhats:
-            if is_inside(h['box'], person_box):
-                has_hardhat = True
-                break
+        has_hardhat = any(is_inside(h['box'], person_box) for h in hardhats)
+        has_no_hardhat = any(is_inside(nh['box'], person_box) for nh in no_hardhats)
+        has_vest = any(is_inside(v['box'], person_box) for v in safety_vests)
+        has_no_vest = any(is_inside(nv['box'], person_box) for nv in no_safety_vests)
         
-        # البحث عن Safety Vest
-        has_vest = False
-        for v in safety_vests:
-            if is_inside(v['box'], person_box):
-                has_vest = True
-                break
-        
-        # تحديد المخالفات
         violations = []
-        if not has_hardhat:
+        
+        if has_no_hardhat:
             violations.append('Missing Helmet')
-        if not has_vest:
+        elif not has_hardhat:
+            violations.append('Missing Helmet')
+        
+        if has_no_vest:
+            violations.append('Missing Vest')
+        elif not has_vest:
             violations.append('Missing Vest')
         
         results_list.append({

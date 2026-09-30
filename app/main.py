@@ -701,7 +701,7 @@ with st.sidebar:
     st.markdown("### System Status")
     
     try:
-        response = requests.get(f"http://127.0.0.1:8000/docs", timeout=2)
+        response = requests.get(f"http://172.29.208.1:8000/docs", timeout=2)
         st.markdown("""
         <div class="status-badge">
             <span class="status-dot status-online"></span>

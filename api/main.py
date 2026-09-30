@@ -15,12 +15,16 @@ app = FastAPI()
 model = YOLO("models/best.pt")
 
 
+# ============================================
+# Endpoint للصور
+# ============================================
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
     content = await file.read()
     image = Image.open(io.BytesIO(content))
     
-    results = model(image, conf=0.25)
+    # NMS أقوى لتقليل الكشوفات المكررة
+    results = model(image, conf=0.25, iou=0.4)
     
     annotated = results[0].plot()
     img = Image.fromarray(annotated)
@@ -45,6 +49,9 @@ async def analyze(file: UploadFile = File(...)):
     }
 
 
+# ============================================
+# Endpoint للفيديو (مع Tracking)
+# ============================================
 @app.post("/analyze-video")
 async def analyze_video(file: UploadFile = File(...)):
     # 1. احفظي الفيديو مؤقتاً
@@ -82,7 +89,8 @@ async def analyze_video(file: UploadFile = File(...)):
         frame_count += 1
         
         if frame_count % SAMPLING_RATE == 0:
-            results = model.track(frame, persist=True, conf=0.25, verbose=False)
+            # NMS أقوى + Tracking
+            results = model.track(frame, persist=True, conf=0.25, iou=0.4, verbose=False)
             compliance = check_compliance(results, model)
             
             annotated = results[0].plot()
@@ -101,7 +109,6 @@ async def analyze_video(file: UploadFile = File(...)):
                 if conf > person_data[track_id]['best_conf']:
                     x1, y1, x2, y2 = [int(v) for v in c['box']]
                     
-                    # تأكدي إن الإحداثيات جوّا الصورة
                     x1 = max(0, x1)
                     y1 = max(0, y1)
                     x2 = min(w, x2)
@@ -120,7 +127,7 @@ async def analyze_video(file: UploadFile = File(...)):
                                 
                                 person_data[track_id]['best_frame'] = frame_base64
                                 person_data[track_id]['best_conf'] = conf
-                            except Exception as e:
+                            except Exception:
                                 pass
                 
                 if c['status'] == 'COMPLIANT':
